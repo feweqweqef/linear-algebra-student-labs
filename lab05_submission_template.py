@@ -40,14 +40,27 @@ def gram_schmidt_qr(A):
     R : numpy.ndarray
         Upper triangular matrix of shape ``(n, n)``.
     """
+    ## my notes 
+    ## checks size of matrix to make sure its a square
     n, m = A.shape
     if n != m:
         raise ValueError(f"the matrix A is not square, {A.shape=}")
 
+    ## making 2 blank matrices the same size as A
     Q = np.empty_like(A)
     R = np.zeros_like(A)
 
     # TODO: fill in Q and R
+
+    ## FIRST need to go A's column one at a time and make a matching col of Q 
+    for j in range(n):
+        v = A[:, j].copy()
+        for i in range(j):
+            R[i, j] = Q[:, i] @ A[:, j]
+            
+            v = v - R[i, j] * Q[:, i]
+        R[j, j] = np.linalg.norm(v)
+        Q[:, j] = v / R[j, j]
 
     return Q, R
 
@@ -59,15 +72,22 @@ def generate_table():
     for this exact filename).
     """
     # TODO: build the table and save it, e.g.
-    # import pandas as pd
-    #
-    # rows = []
-    # for eps in [10**-j for j in range(6, 17)]:
-    #     ...
-    #     rows.append(
-    #         {"eps": eps, "error1": error1, "error2": error2, "error3": error3}
-    #     )
-    # pd.DataFrame(rows).to_csv("table.csv", index=False)
+    import pandas as pd
+    
+    rows = []
+    for j in range(6, 17):
+        eps = 10.0 ** -j
+        A = A_func(eps)
+        Q, R = gram_schmidt_qr(A)
+
+        error1 = np.linalg.norm(A - Q @ R)
+        error2 = np.linalg.norm(Q.T @ Q - np.eye(A.shape[0]))
+        error3 = np.linalg.norm(R - np.triu(R))
+
+        rows.append(
+          {"eps": eps, "error1": error1, "error2": error2, "error3": error3}
+        )
+    pd.DataFrame(rows).to_csv("table.csv", index=False)
 
 
 if __name__ == "__main__":
